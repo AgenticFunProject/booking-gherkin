@@ -1,7 +1,7 @@
 package com.agenticfun.bookinggherkin.booking;
 
+import com.agenticfun.bookinggherkin.web.ApiErrorFactory;
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -10,6 +10,7 @@ import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -18,9 +19,16 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class BookingExceptionHandler {
+
+    private final ApiErrorFactory apiErrorFactory;
+
+    public BookingExceptionHandler(ApiErrorFactory apiErrorFactory) {
+        this.apiErrorFactory = apiErrorFactory;
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValid(
@@ -73,6 +81,14 @@ public class BookingExceptionHandler {
                 .body(errorBody(HttpStatus.NOT_FOUND, ex.getMessage(), request));
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(errorBody(HttpStatus.FORBIDDEN, "Access is denied", request));
+    }
+
     @ExceptionHandler(BookingLifecycleConflictException.class)
     public ResponseEntity<Map<String, Object>> handleLifecycleConflict(
             BookingLifecycleConflictException ex,
@@ -120,6 +136,15 @@ public class BookingExceptionHandler {
                 .body(errorBody(HttpStatus.NOT_FOUND, message, request));
     }
 
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResourceFound(
+            NoResourceFoundException ex,
+            HttpServletRequest request) {
+        String message = "No endpoint found for %s %s".formatted(ex.getHttpMethod(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(errorBody(HttpStatus.NOT_FOUND, message, request));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpected(HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -129,17 +154,7 @@ public class BookingExceptionHandler {
                         request));
     }
 
-    private static Map<String, Object> errorBody(HttpStatus status, String message, HttpServletRequest request) {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", Instant.now().toString());
-        body.put("status", status.value());
-        body.put("error", status.getReasonPhrase());
-        body.put("message", message);
-        body.put("path", request.getRequestURI());
-        String requestId = request.getHeader("X-Request-ID");
-        if (requestId != null && !requestId.isBlank()) {
-            body.put("requestId", requestId);
-        }
-        return body;
+    private Map<String, Object> errorBody(HttpStatus status, String message, HttpServletRequest request) {
+        return apiErrorFactory.body(status, message, request);
     }
 }

@@ -8,3 +8,17 @@ spring:
   web:
     resources:
       add-mappings: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+
+booking:
+  security:
+    enabled: false
+    jwt:
+      issuer: test-issuer
+      audience: equipments-service
+      secret: booking-gherkin-test-secret-for-hs256-validation
