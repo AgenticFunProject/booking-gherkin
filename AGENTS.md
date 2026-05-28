@@ -16,6 +16,8 @@ The files in `features/` are intended to be used as AI generation inputs for
 building the target project.
 
 - Treat feature files as product specifications, not only test artifacts.
+- Treat feature files as canonical project roots. Do not change them unless the
+  user or project maintainer explicitly asks for a feature-specification change.
 - Write scenarios so an AI system can infer behavior, boundaries, data rules,
   and expected outcomes without relying on hidden project context.
 - Prefer explicit acceptance criteria and concrete examples over shorthand.
@@ -29,6 +31,8 @@ building the target project.
 - Work only inside this repository unless the user explicitly asks for changes
   elsewhere.
 - Treat external repositories as references, not as files to edit from here.
+- Do not modify files under `features/` as a drive-by cleanup, refactor, style
+  pass, or inferred correction.
 - Do not silently copy external feature files into this repository.
 - If syncing from another source, record what changed and why.
 - Preserve intentional divergence when this repository is the canonical Gherkin
