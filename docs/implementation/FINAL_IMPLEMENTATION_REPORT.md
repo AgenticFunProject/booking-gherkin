@@ -5,6 +5,52 @@ report appears first.
 
 Do not place implementation reports under `features/`.
 
+### 2026-05-28 - Persistence Runtime Implementation
+
+- Feature files consumed: 1 (`features/persistence-runtime.feature`).
+- Scenarios identified: 5.
+- Scenarios implemented or mapped: 5.
+- Scenarios not implemented: 0.
+- Validation commands and results:
+  - `./mvnw test` from `app/`: passed.
+  - `./mvnw verify` from `app/`: passed.
+- Test counts:
+  - Passed: 118 total tests, including 5 persistence-runtime restart contract tests and 10 cancellation contract tests from merged master.
+  - Failed: 0.
+  - Skipped: 0.
+- Known gaps: Persistence is a pragmatic local JSON file store, not a production database or multi-node storage layer.
+- Assumptions: No new assumptions were added; runtime path is configurable with `booking.persistence.path` or `BOOKING_RUNTIME_PATH`.
+- Deferred requirements: Production-grade storage, migrations, file locking across multiple concurrent processes, and remote/distributed persistence remain outside this local runtime slice.
+- Unsupported scenarios: None from `features/persistence-runtime.feature`.
+- Feature-to-scenario or scenario-to-implementation mapping:
+  - "Empty durable service remains empty after restart" -> file-backed store loads an empty state and list pagination remains stable after service restart.
+  - "Created booking can be read after restart" -> bookings are serialized to JSON with ids, references, status, customer/cargo/equipment details, `createdAt`, and `updatedAt`, then restored on startup.
+  - "Lifecycle status survives restart" -> confirm/start/complete/cancel transitions persist updated status and `updatedAt` before restart.
+  - "Booking references remain unique after restart" -> startup restores the ID/reference sequence from persisted bookings before generating the next `BKG-YYYY-NNNNN` reference.
+  - "Customer and status filtered lists reflect durable state after restart" -> restored bookings back the existing customer/status filters and pagination metadata.
+- Files generated:
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingPersistenceException.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingPersistenceProperties.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/FileBookingPersistenceStore.java`
+  - `app/src/test/java/com/agenticfun/bookinggherkin/booking/BookingPersistenceRuntimeContractTest.java`
+  - `app/src/test/resources/application.yml`
+- Files manually edited after generation:
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingService.java`
+  - `app/src/main/resources/application.yml`
+  - `docs/implementation/FINAL_IMPLEMENTATION_REPORT.md`
+- Components, modules, endpoints, commands, screens, or workflows created:
+  - Configurable local booking persistence properties.
+  - Atomic JSON snapshot persistence for booking create and lifecycle transitions.
+  - Startup restoration for bookings and generated-reference sequence state.
+  - Restart-style contract tests that rebuild Spring application contexts against an isolated temp runtime path.
+- Runtime/build/lint/smoke-test results: Maven test and verify passed; warning scan of captured logs found no matching `WARN`, `WARNING:`, CDS sharing, ByteBuddy, or dynamic Java-agent warning patterns.
+- Local run instructions: `cd app && ./mvnw spring-boot:run`; durable state defaults to `${java.io.tmpdir}/booking-gherkin-runtime/bookings.json` and can be changed with `BOOKING_RUNTIME_PATH` or `booking.persistence.path`.
+- Required environment variables: None.
+- External services: None for the local profile.
+- Seed or test data: Persistence tests create bookings through `/api/v1/bookings`, transition them through lifecycle endpoints, restart the application context, and read/list from the same isolated temp JSON file.
+- Deployment artifacts, reports, logs, or generated documentation: Maven writes ignored build output under `app/target/`; validation logs were captured outside the repository under `/tmp`.
+- AI generation audit notes: Implementation was generated from `features/persistence-runtime.feature`, `AGENTS.md`, and implementation docs; files under `features/` were not modified.
+
 ### 2026-05-28 - Booking Cancellation Contract Implementation
 
 - Feature files consumed: 1 (`features/booking-cancellation.feature`).

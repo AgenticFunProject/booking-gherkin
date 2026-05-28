@@ -21,8 +21,7 @@ logging:
 
 booking:
   persistence:
-    enabled: true
-    path: ${BOOKING_RUNTIME_PATH:${java.io.tmpdir}/booking-gherkin-runtime/bookings.json}
+    enabled: false
   security:
     enabled: false
     jwt:

@@ -25,11 +25,17 @@ public class BookingService {
     private final Map<String, BookingResponse> bookingsByReference = new ConcurrentHashMap<>();
     private final List<ExternalBookingValidator> externalValidators;
     private final EquipmentClient equipmentClient;
+    private final FileBookingPersistenceStore persistenceStore;
     private final Clock clock = Clock.systemUTC();
 
-    public BookingService(List<ExternalBookingValidator> externalValidators, EquipmentClient equipmentClient) {
+    public BookingService(
+            List<ExternalBookingValidator> externalValidators,
+            EquipmentClient equipmentClient,
+            FileBookingPersistenceStore persistenceStore) {
         this.externalValidators = externalValidators;
         this.equipmentClient = equipmentClient;
+        this.persistenceStore = persistenceStore;
+        restorePersistedBookings();
     }
 
     public BookingResponse create(CreateBookingRequest request) {
@@ -55,6 +61,7 @@ public class BookingService {
                 createdAt,
                 createdAt);
         store(booking);
+        persist();
         return booking;
     }
 
@@ -111,6 +118,7 @@ public class BookingService {
         idSequence.set(0);
         bookingsByReference.clear();
         bookingsById.clear();
+        persistenceStore.clear();
     }
 
     public BookingResponse confirm(long bookingId) {
@@ -163,7 +171,7 @@ public class BookingService {
             Set<BookingStatus> allowedCurrentStatuses,
             BookingStatus targetStatus,
             Consumer<BookingResponse> beforeTransition) {
-        return bookingsById.compute(bookingId, (id, current) -> {
+        BookingResponse updated = bookingsById.compute(bookingId, (id, current) -> {
             if (current == null) {
                 throw BookingNotFoundException.withId(id);
             }
@@ -172,15 +180,31 @@ public class BookingService {
             }
 
             beforeTransition.accept(current);
-            BookingResponse updated = withStatus(current, targetStatus);
-            bookingsByReference.put(updated.bookingReference(), updated);
-            return updated;
+            BookingResponse transitioned = withStatus(current, targetStatus);
+            bookingsByReference.put(transitioned.bookingReference(), transitioned);
+            return transitioned;
         });
+        persist();
+        return updated;
     }
 
     private void store(BookingResponse booking) {
         bookingsById.put(booking.id(), booking);
         bookingsByReference.put(booking.bookingReference(), booking);
+    }
+
+    private void restorePersistedBookings() {
+        List<BookingResponse> restoredBookings = persistenceStore.load();
+        restoredBookings.forEach(this::store);
+        long highestSequence = restoredBookings.stream()
+                .mapToLong(booking -> Math.max(booking.id(), sequenceFromReference(booking.bookingReference())))
+                .max()
+                .orElse(0);
+        idSequence.set(highestSequence);
+    }
+
+    private void persist() {
+        persistenceStore.save(bookingsById.values());
     }
 
     private void rejectUnsupportedEquipment(CreateBookingRequest request) {
@@ -230,6 +254,13 @@ public class BookingService {
     private static String bookingReference(long id, Instant createdAt) {
         int year = createdAt.atZone(ZoneOffset.UTC).getYear();
         return "BKG-%d-%05d".formatted(year, id);
+    }
+
+    private static long sequenceFromReference(String bookingReference) {
+        if (!BOOKING_REFERENCE.matcher(bookingReference).matches()) {
+            return 0;
+        }
+        return Long.parseLong(bookingReference.substring(bookingReference.lastIndexOf('-') + 1));
     }
 
     private BookingResponse withStatus(BookingResponse booking, BookingStatus status) {
