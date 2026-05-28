@@ -33,8 +33,14 @@ building the target project.
 - Treat external repositories as references, not as files to edit from here.
 - Do not modify files under `features/` as a drive-by cleanup, refactor, style
   pass, or inferred correction.
+- Do not rename scenarios, rephrase steps, reorder scenarios, or normalize
+  wording in `features/` unless explicitly requested.
+- Do not place generated code, runner output, logs, reports, temporary files, or
+  other implementation artifacts under `features/`.
 - Do not silently copy external feature files into this repository.
 - If syncing from another source, record what changed and why.
+- If requirements are ambiguous, document assumptions separately instead of
+  editing `features/` to resolve them unless explicitly asked.
 - Preserve intentional divergence when this repository is the canonical Gherkin
   source.
 
@@ -111,6 +117,8 @@ Required metrics:
 - Validation commands run and their results.
 - Test count, pass count, fail count, and skipped count when available.
 - Known gaps, assumptions, deferred requirements, or unsupported scenarios.
+- Feature file names and scenario titles referenced exactly as written when
+  reporting coverage or implementation status.
 
 Report when available:
 
