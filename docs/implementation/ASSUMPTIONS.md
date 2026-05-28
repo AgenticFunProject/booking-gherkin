@@ -6,6 +6,14 @@ incomplete. Add new entries at the top so the newest assumption appears first.
 Do not edit `features/` to resolve ambiguity unless a project maintainer
 explicitly requests a feature-specification change.
 
+### 2026-05-28 - Local Clients Use Lifecycle Endpoint Mapping
+
+- Context: `features/local-clients.feature` requires clients to confirm, cancel, and retrieve the latest booking by id, but it does not define concrete lifecycle HTTP paths. The lifecycle implementation merged first and defines the authoritative id-based lifecycle API.
+- Assumption: This local-clients slice uses the merged lifecycle API: `POST /api/v1/bookings/{bookingId}/confirm`, `POST /api/v1/bookings/{bookingId}/cancel`, and `GET /api/v1/bookings/{bookingId}`.
+- Risk: Later API versioning or lifecycle changes may require the local-clients contract tests to follow the authoritative lifecycle surface again.
+- Affected feature files or scenarios: `features/local-clients.feature` scenarios "Confirming a booking uses local equipment reservation behavior", "Cancelling a confirmed booking uses local equipment release behavior", and "Real external HTTP services are outside this local contract".
+- Follow-up needed: Keep local equipment reserve/release behavior attached to the authoritative lifecycle transitions when future lifecycle changes land.
+
 ### 2026-05-28 - Read/List Equipment Fixture Clarification
 
 - Context: `features/booking-read-list.feature` seeds an existing completed booking with equipment type `40FT`, while the first slice only derived an allowlist from create scenarios.

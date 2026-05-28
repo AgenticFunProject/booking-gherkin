@@ -5,6 +5,49 @@ report appears first.
 
 Do not place implementation reports under `features/`.
 
+### 2026-05-28 - Local External Clients Contract Implementation
+
+- Feature files consumed: 1 (`features/local-clients.feature`).
+- Scenarios identified: 4.
+- Scenarios implemented or mapped: 4.
+- Scenarios not implemented: 0.
+- Validation commands and results:
+  - `./mvnw test` from `app/`: passed after merging current master with read/list.
+  - `./mvnw verify` from `app/`: passed after merging current master with read/list.
+- Test counts:
+  - Passed: 49 total tests, including 4 local-clients contract tests, 14 read/list contract tests, and 17 lifecycle contract tests.
+  - Failed: 0.
+  - Skipped: 0.
+- Known gaps: No real Schedule, Quote, or Equipment HTTP clients are implemented; the local profile remains no-HTTP for external client behavior.
+- Assumptions: Local client confirm/cancel tests use the merged lifecycle API documented in `docs/implementation/ASSUMPTIONS.md`.
+- Deferred requirements: Durable persistence, authentication, ownership checks, and real external client integration remain deferred to their owning branches or later slices.
+- Unsupported scenarios: None from `features/local-clients.feature`.
+- Feature-to-scenario or scenario-to-implementation mapping:
+  - "Local schedule and quote stubs accept a valid booking request" -> local profile `POST /api/v1/bookings` uses schedule and quote validator stubs and returns `PENDING` without outbound HTTP.
+  - "Confirming a booking uses local equipment reservation behavior" -> `POST /api/v1/bookings/{bookingId}/confirm` uses the lifecycle transition and records an in-memory local equipment reservation.
+  - "Cancelling a confirmed booking uses local equipment release behavior" -> `POST /api/v1/bookings/{bookingId}/cancel` uses the lifecycle transition and releases the in-memory local equipment reservation.
+  - "Real external HTTP services are outside this local contract" -> local profile tests configure unavailable external base URLs and still create, confirm, and cancel using normal booking response shape.
+- Files generated:
+  - None.
+- Files manually edited after generation:
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingService.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/EquipmentClient.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/LocalEquipmentClient.java`
+  - `app/src/test/java/com/agenticfun/bookinggherkin/booking/LocalClientsContractTest.java`
+  - `docs/implementation/ASSUMPTIONS.md`
+  - `docs/implementation/FINAL_IMPLEMENTATION_REPORT.md`
+- Components, modules, endpoints, commands, screens, or workflows created:
+  - Local equipment client abstraction and in-memory local profile implementation.
+  - Local equipment reservation side effect on the merged confirm lifecycle transition.
+  - Local equipment release side effect on the merged confirmed-booking cancel lifecycle transition.
+- Runtime/build/lint/smoke-test results: Maven test and verify passed after merging current master with read/list; no separate runtime smoke test was run.
+- Local run instructions: `cd app && ./mvnw spring-boot:run`; the default `local` profile requires no external Schedule, Quote, or Equipment HTTP services.
+- Required environment variables: None.
+- External services: None for the local profile.
+- Seed or test data: Tests create bookings through the API.
+- Deployment artifacts, reports, logs, or generated documentation: Maven writes ignored build output under `app/target/`.
+- AI generation audit notes: Implementation was generated from `features/local-clients.feature`, `AGENTS.md`, and `docs/implementation/IMPLEMENTATION_BRIEF.md`; files under `features/` were not modified.
+
 ### 2026-05-28 - Booking Read/List Contract Implementation
 
 - Feature files consumed: 1 (`features/booking-read-list.feature`).
