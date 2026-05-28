@@ -129,7 +129,11 @@ public class BookingService {
         return transition(bookingId, Set.of(BookingStatus.PENDING, BookingStatus.CONFIRMED), BookingStatus.CANCELLED,
                 booking -> {
                     if (booking.status() == BookingStatus.CONFIRMED) {
-                        equipmentClient.release(booking);
+                        try {
+                            equipmentClient.release(booking);
+                        } catch (RuntimeException ex) {
+                            // Cancellation remains terminal even when equipment release fails.
+                        }
                     }
                 });
     }
