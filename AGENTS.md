@@ -10,6 +10,13 @@ This repository is intended to hold Gherkin specifications that can guide projec
 generation and validation. It should remain usable by anyone cloning it with a
 standard Git workflow.
 
+## Project Goal
+
+This repository contains canonical Gherkin specifications and generated
+application code. The goal is to generate and evolve a Java Spring Boot
+application from the specifications while preserving `features/` as the protected
+source input.
+
 ## Generation Purpose
 
 The files in `features/` are intended to be used as AI generation inputs for
@@ -59,6 +66,9 @@ building the target project.
 ## Repository Layout
 
 - `features/` is the main product of this repository.
+- `app/` is the location for generated application code.
+- `docs/implementation/` is the location for implementation reports, metrics,
+  assumptions, and delivery notes.
 - Keep supporting documentation close to the feature files it explains.
 - Add new feature files under `features/` unless a broader layout is deliberately
   introduced.
@@ -73,6 +83,15 @@ Before starting implementation or generation work, read:
 Use the implementation brief for stack, layout, scope, validation commands, and
 reporting expectations. Treat `features/` as canonical source input.
 
+Current implementation baseline:
+
+- Target stack: Java 21, Spring Boot, Maven.
+- First implementation slice: project skeleton plus
+  `features/booking-create.feature`.
+- Generated application code belongs under `app/`.
+- Record implementation assumptions in
+  `docs/implementation/ASSUMPTIONS.md`, newest entries first.
+
 ## Workflow
 
 - Use the repository's normal issue and pull request workflow.
@@ -81,6 +100,29 @@ reporting expectations. Treat `features/` as canonical source input.
 - Keep commits focused on one purpose.
 - Agents should work autonomously: make the requested change, validate it, commit
   it, push the branch, and open a pull request when the change is ready for review.
+
+## Definition Of Done
+
+A change is done when:
+
+- It is made on a focused branch.
+- It preserves `features/` unless a feature-specification change was explicitly
+  requested.
+- Validation has been run, or unavailable validation is clearly explained.
+- Implementation reports or assumption notes are updated when the change affects
+  generated behavior, project scope, or delivery status.
+- The pull request describes scope, validation, assumptions, and known gaps.
+
+## Pull Request Checklist
+
+Each pull request should state:
+
+- Files changed.
+- Feature files consumed or referenced.
+- Whether files under `features/` changed.
+- Validation commands run and results.
+- Assumptions, gaps, unsupported scenarios, or deferred requirements.
+- Implementation report path, when applicable.
 
 ## Pull Request Review
 
