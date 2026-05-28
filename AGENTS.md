@@ -66,6 +66,18 @@ building the target project.
 - Agents should work autonomously: make the requested change, validate it, commit
   it, push the branch, and open a pull request when the change is ready for review.
 
+## Pull Request Review
+
+- The authoring agent should self-check its work before opening a pull request.
+- The authoring agent should not be the final reviewer of its own pull request.
+- Use an independent reviewer when possible: another agent, a maintainer, or a
+  human reviewer.
+- Reviews should check scope, clarity, validation evidence, and whether
+  `features/` remains untouched unless a feature-specification change was
+  explicitly requested.
+- Documentation-only changes can have lightweight review, but review should still
+  be independent.
+
 ## Validation
 
 - At minimum, review changed `.feature` files for clear syntax and readable flow.
@@ -73,3 +85,36 @@ building the target project.
 - Do not invent passing test evidence. Report exactly what was and was not run.
 - When validation is not available, state that clearly and describe the manual
   checks performed.
+
+## Implementation Metrics
+
+When a project is generated or implemented from these specifications, include a
+final implementation summary with measurable results.
+
+Required metrics:
+
+- Number of feature files consumed.
+- Number of scenarios identified.
+- Number of scenarios implemented or mapped.
+- Number of scenarios not implemented, if any.
+- Validation commands run and their results.
+- Test count, pass count, fail count, and skipped count when available.
+- Known gaps, assumptions, deferred requirements, or unsupported scenarios.
+
+Report when available:
+
+- Feature-to-scenario and scenario-to-implementation mapping.
+- Files generated and files manually edited after generation.
+- Components, modules, endpoints, commands, screens, or workflows created.
+- Unit, integration, end-to-end, contract, or Gherkin scenario execution counts.
+- Lint, typecheck, build, and runtime smoke-test results.
+- Files changed and lines added or removed.
+- Generated versus manually authored file counts, if knowable.
+- Local run instructions, required environment variables, external services, and
+  seed or test data requirements.
+- Deployment artifacts, reports, logs, or generated documentation paths.
+- AI generation audit notes, including source specifications used and assumptions
+  made by the agent.
+
+Do not invent metrics. If a metric is unavailable, state that it is unavailable
+and explain why.
