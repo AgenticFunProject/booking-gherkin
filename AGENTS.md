@@ -170,6 +170,13 @@ Each pull request should state:
 - Reviews should check scope, clarity, validation evidence, and whether
   `features/` remains untouched unless a feature-specification change was
   explicitly requested.
+- The independent reviewer should leave a pull request comment summarizing the
+  review.
+- The review comment should state what was reviewed, whether `features/`
+  changed, validation evidence checked, risks or assumptions found, and a final
+  recommendation: approve, request changes, or comment only.
+- Review comments may include one brief, light human note, but the review must
+  remain clear, substantive, and professional.
 - Documentation-only changes can have lightweight review, but review should still
   be independent.
 
