@@ -1,9 +1,9 @@
 package com.agenticfun.bookinggherkin.booking;
 
-import static com.agenticfun.bookinggherkin.security.TestJwtTokens.SECRET;
-import static com.agenticfun.bookinggherkin.security.TestJwtTokens.bearer;
-import static com.agenticfun.bookinggherkin.security.TestJwtTokens.bearerWithSnakeCaseCustomerId;
-import static com.agenticfun.bookinggherkin.security.TestJwtTokens.token;
+import static com.agenticfun.bookinggherkin.security.JwtTokenFixtures.SECRET;
+import static com.agenticfun.bookinggherkin.security.JwtTokenFixtures.bearer;
+import static com.agenticfun.bookinggherkin.security.JwtTokenFixtures.bearerWithSnakeCaseCustomerId;
+import static com.agenticfun.bookinggherkin.security.JwtTokenFixtures.token;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

@@ -36,7 +36,7 @@ Do not place implementation reports under `features/`.
   - `app/src/test/java/com/agenticfun/bookinggherkin/booking/AuthOwnershipContractTest.java`
   - `app/src/test/java/com/agenticfun/bookinggherkin/booking/PublicRoutesContractTest.java`
   - `app/src/test/java/com/agenticfun/bookinggherkin/booking/LocalUnsecuredModeContractTest.java`
-  - `app/src/test/java/com/agenticfun/bookinggherkin/security/TestJwtTokens.java`
+  - `app/src/test/java/com/agenticfun/bookinggherkin/security/JwtTokenFixtures.java`
 - Files manually edited after generation:
   - `app/pom.xml`
   - `app/src/main/resources/application.yml`

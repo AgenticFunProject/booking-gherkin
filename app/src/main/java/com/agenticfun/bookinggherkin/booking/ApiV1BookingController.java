@@ -58,7 +58,7 @@ public class ApiV1BookingController {
     @RequestMapping(value = "/{id}/cancel", method = {RequestMethod.PATCH, RequestMethod.POST})
     public BookingResponse cancel(@PathVariable long id) {
         authorizer.requireCanAttemptCancel();
-        BookingResponse booking = bookingService.getById(id);
+        BookingResponse booking = bookingService.getByIdentifier(Long.toString(id));
         authorizer.requireCanCancel(booking);
         return bookingService.cancel(id);
     }

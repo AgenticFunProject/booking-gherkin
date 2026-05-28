@@ -9,12 +9,12 @@ import java.util.Map;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-public final class TestJwtTokens {
+public final class JwtTokenFixtures {
 
     public static final String SECRET = "booking-gherkin-test-secret-for-hs256-validation";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private TestJwtTokens() {
+    private JwtTokenFixtures() {
     }
 
     public static String bearer(String role) {
