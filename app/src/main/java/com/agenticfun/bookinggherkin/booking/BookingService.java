@@ -18,15 +18,10 @@ public class BookingService {
     private final AtomicLong idSequence = new AtomicLong();
     private final Map<String, BookingResponse> bookingsByReference = new ConcurrentHashMap<>();
     private final List<ExternalBookingValidator> externalValidators;
-    private final Clock clock;
+    private final Clock clock = Clock.systemUTC();
 
     public BookingService(List<ExternalBookingValidator> externalValidators) {
-        this(externalValidators, Clock.systemUTC());
-    }
-
-    BookingService(List<ExternalBookingValidator> externalValidators, Clock clock) {
         this.externalValidators = externalValidators;
-        this.clock = clock;
     }
 
     public BookingResponse create(CreateBookingRequest request) {
