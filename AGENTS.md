@@ -10,6 +10,39 @@ This repository is intended to hold Gherkin specifications that can guide projec
 generation and validation. It should remain usable by anyone cloning it with a
 standard Git workflow.
 
+## Project Goal
+
+This repository contains canonical Gherkin specifications and generated
+application code. The goal is to generate and evolve a Java Spring Boot
+application from the specifications while preserving `features/` as the protected
+source input.
+
+## Agent Startup Checklist
+
+At the start of any task, read:
+
+- `AGENTS.md`
+- `docs/implementation/IMPLEMENTATION_BRIEF.md`
+- relevant files under `features/`
+- `docs/implementation/ASSUMPTIONS.md`, if it exists
+- `docs/implementation/FINAL_IMPLEMENTATION_REPORT.md`, if it exists
+
+Do not rely on prior chat history or private context that is not reflected in
+repository files or the current task description.
+
+## Instruction Priority
+
+When instructions conflict, use this order:
+
+1. Explicit current user or maintainer request.
+2. Canonical behavior described in `features/`.
+3. Workflow and guardrails in `AGENTS.md`.
+4. Stack, layout, scope, validation, and reporting details in
+   `docs/implementation/IMPLEMENTATION_BRIEF.md`.
+5. Existing implementation under `app/`.
+
+Do not resolve conflicts by silently changing `features/`.
+
 ## Generation Purpose
 
 The files in `features/` are intended to be used as AI generation inputs for
@@ -44,6 +77,17 @@ building the target project.
 - Preserve intentional divergence when this repository is the canonical Gherkin
   source.
 
+## Ambiguity And Assumptions
+
+If requirements are unclear or incomplete:
+
+- Do not edit `features/` to remove ambiguity unless explicitly requested.
+- Record assumptions in `docs/implementation/ASSUMPTIONS.md`, newest entries
+  first.
+- Mention assumptions, unresolved questions, and risk in the pull request.
+- Prefer a narrow implementation that preserves documented assumptions over a
+  broad implementation based on hidden context.
+
 ## Gherkin Style
 
 - Keep feature files business-readable and implementation-agnostic.
@@ -59,9 +103,31 @@ building the target project.
 ## Repository Layout
 
 - `features/` is the main product of this repository.
+- `app/` is the location for generated application code.
+- `docs/implementation/` is the location for implementation reports, metrics,
+  assumptions, and delivery notes.
 - Keep supporting documentation close to the feature files it explains.
 - Add new feature files under `features/` unless a broader layout is deliberately
   introduced.
+
+## Required Context
+
+Before starting implementation or generation work, read:
+
+- `docs/implementation/IMPLEMENTATION_BRIEF.md`
+- the relevant files under `features/`
+
+Use the implementation brief for stack, layout, scope, validation commands, and
+reporting expectations. Treat `features/` as canonical source input.
+
+Current implementation baseline:
+
+- Target stack: Java 21, Spring Boot, Maven.
+- First implementation slice: project skeleton plus
+  `features/booking-create.feature`.
+- Generated application code belongs under `app/`.
+- Record implementation assumptions in
+  `docs/implementation/ASSUMPTIONS.md`, newest entries first.
 
 ## Workflow
 
@@ -71,6 +137,29 @@ building the target project.
 - Keep commits focused on one purpose.
 - Agents should work autonomously: make the requested change, validate it, commit
   it, push the branch, and open a pull request when the change is ready for review.
+
+## Definition Of Done
+
+A change is done when:
+
+- It is made on a focused branch.
+- It preserves `features/` unless a feature-specification change was explicitly
+  requested.
+- Validation has been run, or unavailable validation is clearly explained.
+- Implementation reports or assumption notes are updated when the change affects
+  generated behavior, project scope, or delivery status.
+- The pull request describes scope, validation, assumptions, and known gaps.
+
+## Pull Request Checklist
+
+Each pull request should state:
+
+- Files changed.
+- Feature files consumed or referenced.
+- Whether files under `features/` changed.
+- Validation commands run and results.
+- Assumptions, gaps, unsupported scenarios, or deferred requirements.
+- Implementation report path, when applicable.
 
 ## Pull Request Review
 
