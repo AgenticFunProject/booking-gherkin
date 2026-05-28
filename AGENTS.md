@@ -96,6 +96,8 @@ Default report location:
 - Write the final implementation summary to
   `docs/implementation/FINAL_IMPLEMENTATION_REPORT.md` in the generated or
   implemented project.
+- If the report file contains multiple implementation summaries, add new entries
+  at the top so the newest report appears first.
 - If the project already has a different established reporting location, use that
   location and link it from the pull request.
 - Do not place implementation reports under `features/`.
