@@ -137,6 +137,8 @@ Current implementation baseline:
 - Keep commits focused on one purpose.
 - Agents should work autonomously: make the requested change, validate it, commit
   it, push the branch, and open a pull request when the change is ready for review.
+- Do not wait for a human maintainer to approve routine merges after required
+  validation passes and a different reviewer agent has approved the pull request.
 
 ## Definition Of Done
 
@@ -166,8 +168,10 @@ Each pull request should state:
 
 - The authoring agent should self-check its work before opening a pull request.
 - The authoring agent should not be the final reviewer of its own pull request.
-- Use an independent reviewer when possible: another agent, a maintainer, or a
-  human reviewer.
+- A pull request authored by an agent must be reviewed by a different agent
+  before merge.
+- Do not merge an agent-authored pull request without a review comment from a
+  reviewer agent that is different from the authoring agent.
 - Reviews should check scope, clarity, validation evidence, and whether
   `features/` remains untouched unless a feature-specification change was
   explicitly requested.
@@ -178,8 +182,8 @@ Each pull request should state:
   assumptions found, and a final recommendation: approve, request changes, or
   comment only.
 - The review comment should explicitly state whether the reviewer is different
-  from the authoring agent. If the same agent performed both roles, say so and
-  do not present the review as independent.
+  from the authoring agent. If the same agent performed both roles, say so, do
+  not present the review as independent, and do not use it as merge approval.
 - Review comments may include one brief, light human note, but the review must
   remain clear, substantive, and professional.
 - Documentation-only changes can have lightweight review, but review should still
