@@ -63,6 +63,16 @@ building the target project.
 - Add new feature files under `features/` unless a broader layout is deliberately
   introduced.
 
+## Required Context
+
+Before starting implementation or generation work, read:
+
+- `docs/implementation/IMPLEMENTATION_BRIEF.md`
+- the relevant files under `features/`
+
+Use the implementation brief for stack, layout, scope, validation commands, and
+reporting expectations. Treat `features/` as canonical source input.
+
 ## Workflow
 
 - Use the repository's normal issue and pull request workflow.
