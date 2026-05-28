@@ -5,6 +5,53 @@ report appears first.
 
 Do not place implementation reports under `features/`.
 
+### 2026-05-28 - Booking Cancellation Contract Implementation
+
+- Feature files consumed: 1 (`features/booking-cancellation.feature`).
+- Scenarios identified: 10 executable cancellation cases, including the 3 examples in the ineligible-bookings scenario outline.
+- Scenarios implemented or mapped: 10.
+- Scenarios not implemented: 0.
+- Validation commands and results:
+  - `./mvnw test` from `app/`: passed.
+  - `./mvnw verify` from `app/`: passed.
+- Test counts:
+  - Passed: 113 total tests, including 10 focused cancellation contract tests.
+  - Failed: 0.
+  - Skipped: 0.
+- Warning scan:
+  - Logs captured at `/tmp/bg-9oy-mvn-test.log` and `/tmp/bg-9oy-mvn-verify.log`.
+  - `rg -n "WARN|WARNING:|warning: Sharing|ByteBuddy|Java agent has been loaded dynamically|Dynamic loading of agents" /tmp/bg-9oy-mvn-test.log /tmp/bg-9oy-mvn-verify.log`: no matches.
+- Known gaps: Release-attempt observability remains local in-memory behavior for the local equipment client; durable persistence is owned by a separate branch.
+- Assumptions: No new assumptions were added.
+- Deferred requirements: Durable booking persistence and durable external-release attempt storage remain outside this cancellation slice.
+- Unsupported scenarios: None from `features/booking-cancellation.feature`.
+- Feature-to-scenario or scenario-to-implementation mapping:
+  - Customer pending cancellation -> secured cancellation route allows a CUSTOMER with matching `customerId` to cancel and retrieve `CANCELLED`.
+  - SERVICE confirmed cancellation -> SERVICE callers can cancel on behalf of customers and the local equipment client records release attempts.
+  - ADMIN any-customer pending cancellation -> ADMIN callers can cancel bookings for any customer.
+  - Customer ownership rejection -> CUSTOMER callers cannot cancel another customer's booking; the target booking remains unchanged.
+  - Pending cancellation release behavior -> PENDING cancellation does not request equipment release.
+  - Confirmed cancellation release behavior -> CONFIRMED cancellation requests equipment release and returns `CANCELLED`.
+  - Release failure tolerance -> local release failure records a failed attempt and cancellation still returns `200` with `CANCELLED`.
+  - Ineligible statuses -> `IN_PROGRESS`, `COMPLETED`, and `CANCELLED` cancellation attempts return `409 Conflict` and preserve status.
+- Files generated:
+  - `app/src/test/java/com/agenticfun/bookinggherkin/booking/BookingCancellationContractTest.java`
+- Files manually edited after generation:
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingService.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/LocalEquipmentClient.java`
+  - `docs/implementation/FINAL_IMPLEMENTATION_REPORT.md`
+- Components, modules, endpoints, commands, screens, or workflows created:
+  - Local equipment release-attempt and failed-attempt observability for contract tests.
+  - Confirmed-booking cancellation now tolerates local equipment release failure after recording the attempt.
+  - Focused security-enabled cancellation contract tests covering CUSTOMER, SERVICE, ADMIN, ownership, release behavior, release failure, and conflict cases.
+- Runtime/build/lint/smoke-test results: Maven test and verify passed; warning scan found no matching Surefire/JVM agent warning patterns.
+- Local run instructions: `cd app && ./mvnw spring-boot:run`, then call secured `/api/v1/bookings/{id}/cancel` with CUSTOMER, SERVICE, or ADMIN JWTs when `booking.security.enabled=true`.
+- Required environment variables: None for local deterministic JWT mode.
+- External services: None for the local profile.
+- Seed or test data: Cancellation tests create bookings through the secured API and transition them through existing lifecycle endpoints.
+- Deployment artifacts, reports, logs, or generated documentation: Maven writes ignored build output under `app/target/`; validation logs were captured under `/tmp/`.
+- AI generation audit notes: Implementation was generated from `features/booking-cancellation.feature`, `AGENTS.md`, and implementation docs; files under `features/` were not modified.
+
 ### 2026-05-28 - Security And Public Routes Implementation
 
 - Feature files consumed: 2 (`features/auth-ownership.feature`, `features/public-routes.feature`).
