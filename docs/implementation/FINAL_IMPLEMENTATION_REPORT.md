@@ -5,6 +5,53 @@ report appears first.
 
 Do not place implementation reports under `features/`.
 
+### 2026-05-28 - Booking Lifecycle Implementation
+
+- Feature files consumed: 1 (`features/booking-lifecycle.feature`).
+- Scenarios identified: 6.
+- Scenarios implemented or mapped: 6.
+- Scenarios not implemented: 0.
+- Validation commands and results:
+  - `./mvnw test` from `app/`: passed.
+  - `./mvnw verify` from `app/`: passed.
+- Test counts:
+  - Passed: 31 total tests, including 17 lifecycle contract tests.
+  - Failed: 0.
+  - Skipped: 0.
+- Known gaps: Lifecycle state remains in memory, matching the existing first-slice storage model; no authentication or ownership checks are implemented in this slice.
+- Assumptions: No new assumptions were added; lifecycle endpoint shape follows the task request and existing first-slice in-memory storage assumption remains in `docs/implementation/ASSUMPTIONS.md`.
+- Deferred requirements: Read/list, local client integrations beyond existing stubs, error handling hardening, security, durable persistence, and ownership checks remain deferred to their own slices.
+- Unsupported scenarios: None from `features/booking-lifecycle.feature`.
+- Feature-to-scenario or scenario-to-implementation mapping:
+  - "Complete a booking through the valid lifecycle path" -> `POST /api/v1/bookings/{id}/confirm`, `/start`, `/complete`, then `GET /api/v1/bookings/{id}`.
+  - "Cancel a pending booking" -> `POST /api/v1/bookings/{id}/cancel` from `PENDING`, preserving `CANCELLED` on retrieval.
+  - "Cancel a confirmed booking" -> `POST /api/v1/bookings/{id}/cancel` from `CONFIRMED`, preserving `CANCELLED` on retrieval.
+  - "Reject invalid non-terminal lifecycle transitions" -> strict status checks return 409 Conflict with messages containing `<currentStatus> to <targetStatus>` and do not mutate booking status.
+  - "Completed bookings are terminal" -> all lifecycle actions from `COMPLETED` return 409 Conflict and preserve `COMPLETED`.
+  - "Cancelled bookings are terminal" -> all lifecycle actions from `CANCELLED` return 409 Conflict and preserve `CANCELLED`.
+- Files generated:
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingLifecycleConflictException.java`
+  - `app/src/test/java/com/agenticfun/bookinggherkin/booking/BookingLifecycleContractTest.java`
+- Files manually edited after generation:
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingController.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingExceptionHandler.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingNotFoundException.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingService.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingStatus.java`
+  - `docs/implementation/FINAL_IMPLEMENTATION_REPORT.md`
+- Components, modules, endpoints, commands, screens, or workflows created:
+  - Id-indexed booking retrieval with `GET /api/v1/bookings/{id}`.
+  - Lifecycle actions with `POST /api/v1/bookings/{id}/confirm|start|complete|cancel`.
+  - Conflict response mapping for invalid lifecycle transitions.
+  - Legacy `POST /bookings` and `GET /bookings/{bookingReference}` create/read behavior preserved.
+- Runtime/build/lint/smoke-test results: Maven test and verify passed; verify built `app/target/booking-gherkin-app-0.1.0-SNAPSHOT.jar`.
+- Local run instructions: `cd app && ./mvnw spring-boot:run`, then create a booking and call the v1 id-based lifecycle endpoints.
+- Required environment variables: None.
+- External services: None for this slice; local validator stubs are used.
+- Seed or test data: Lifecycle tests create bookings through the API using the default fixture from `features/booking-lifecycle.feature`.
+- Deployment artifacts, reports, logs, or generated documentation: Maven writes build output under ignored `app/target/`.
+- AI generation audit notes: Implementation was generated from `features/booking-lifecycle.feature`, `AGENTS.md`, and `docs/implementation/IMPLEMENTATION_BRIEF.md`; files under `features/` were not modified.
+
 ### 2026-05-28 - First Slice Booking Creation Implementation
 
 - Feature files consumed: 1 (`features/booking-create.feature`).

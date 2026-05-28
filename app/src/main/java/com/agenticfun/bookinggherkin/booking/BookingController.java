@@ -7,11 +7,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/bookings")
 public class BookingController {
 
     private final BookingService bookingService;
@@ -20,13 +18,43 @@ public class BookingController {
         this.bookingService = bookingService;
     }
 
-    @PostMapping
+    @PostMapping("/bookings")
     public ResponseEntity<BookingResponse> create(@Valid @RequestBody CreateBookingRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.create(request));
     }
 
-    @GetMapping("/{bookingReference}")
+    @GetMapping("/bookings/{bookingReference}")
     public BookingResponse getByReference(@PathVariable String bookingReference) {
         return bookingService.getByReference(bookingReference);
+    }
+
+    @PostMapping("/api/v1/bookings")
+    public ResponseEntity<BookingResponse> createV1(@Valid @RequestBody CreateBookingRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.create(request));
+    }
+
+    @GetMapping("/api/v1/bookings/{bookingId}")
+    public BookingResponse getById(@PathVariable long bookingId) {
+        return bookingService.getById(bookingId);
+    }
+
+    @PostMapping("/api/v1/bookings/{bookingId}/confirm")
+    public BookingResponse confirm(@PathVariable long bookingId) {
+        return bookingService.confirm(bookingId);
+    }
+
+    @PostMapping("/api/v1/bookings/{bookingId}/start")
+    public BookingResponse start(@PathVariable long bookingId) {
+        return bookingService.start(bookingId);
+    }
+
+    @PostMapping("/api/v1/bookings/{bookingId}/complete")
+    public BookingResponse complete(@PathVariable long bookingId) {
+        return bookingService.complete(bookingId);
+    }
+
+    @PostMapping("/api/v1/bookings/{bookingId}/cancel")
+    public BookingResponse cancel(@PathVariable long bookingId) {
+        return bookingService.cancel(bookingId);
     }
 }
