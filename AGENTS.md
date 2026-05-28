@@ -91,6 +91,15 @@ building the target project.
 When a project is generated or implemented from these specifications, include a
 final implementation summary with measurable results.
 
+Default report location:
+
+- Write the final implementation summary to
+  `docs/implementation/FINAL_IMPLEMENTATION_REPORT.md` in the generated or
+  implemented project.
+- If the project already has a different established reporting location, use that
+  location and link it from the pull request.
+- Do not place implementation reports under `features/`.
+
 Required metrics:
 
 - Number of feature files consumed.
