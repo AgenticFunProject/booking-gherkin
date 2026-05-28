@@ -154,6 +154,7 @@ A change is done when:
 
 Each pull request should state:
 
+- Authoring agent name or identifier.
 - Files changed.
 - Feature files consumed or referenced.
 - Whether files under `features/` changed.
@@ -172,9 +173,13 @@ Each pull request should state:
   explicitly requested.
 - The independent reviewer should leave a pull request comment summarizing the
   review.
-- The review comment should state what was reviewed, whether `features/`
-  changed, validation evidence checked, risks or assumptions found, and a final
-  recommendation: approve, request changes, or comment only.
+- The review comment should state the reviewer agent name or identifier, what was
+  reviewed, whether `features/` changed, validation evidence checked, risks or
+  assumptions found, and a final recommendation: approve, request changes, or
+  comment only.
+- The review comment should explicitly state whether the reviewer is different
+  from the authoring agent. If the same agent performed both roles, say so and
+  do not present the review as independent.
 - Review comments may include one brief, light human note, but the review must
   remain clear, substantive, and professional.
 - Documentation-only changes can have lightweight review, but review should still
