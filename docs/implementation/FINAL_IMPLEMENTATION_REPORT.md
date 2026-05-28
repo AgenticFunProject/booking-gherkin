@@ -12,20 +12,20 @@ Do not place implementation reports under `features/`.
 - Scenarios implemented or mapped: 4.
 - Scenarios not implemented: 0.
 - Validation commands and results:
-  - `./mvnw test` from `app/`: passed after rebase onto lifecycle master.
-  - `./mvnw verify` from `app/`: passed after rebase onto lifecycle master.
+  - `./mvnw test` from `app/`: passed after merging current master with read/list.
+  - `./mvnw verify` from `app/`: passed after merging current master with read/list.
 - Test counts:
-  - Passed: 35 total tests, including 4 local-clients contract tests.
+  - Passed: 49 total tests, including 4 local-clients contract tests, 14 read/list contract tests, and 17 lifecycle contract tests.
   - Failed: 0.
   - Skipped: 0.
 - Known gaps: No real Schedule, Quote, or Equipment HTTP clients are implemented; the local profile remains no-HTTP for external client behavior.
 - Assumptions: Local client confirm/cancel tests use the merged lifecycle API documented in `docs/implementation/ASSUMPTIONS.md`.
-- Deferred requirements: Durable persistence, authentication, list/read-all, ownership checks, and real external client integration remain deferred to their owning branches or later slices.
+- Deferred requirements: Durable persistence, authentication, ownership checks, and real external client integration remain deferred to their owning branches or later slices.
 - Unsupported scenarios: None from `features/local-clients.feature`.
 - Feature-to-scenario or scenario-to-implementation mapping:
   - "Local schedule and quote stubs accept a valid booking request" -> local profile `POST /api/v1/bookings` uses schedule and quote validator stubs and returns `PENDING` without outbound HTTP.
-  - "Confirming a booking uses local equipment reservation behavior" -> `POST /api/v1/bookings/{bookingId}/confirm` uses the lifecycle transition from master and records an in-memory local equipment reservation.
-  - "Cancelling a confirmed booking uses local equipment release behavior" -> `POST /api/v1/bookings/{bookingId}/cancel` uses the lifecycle transition from master and releases the in-memory local equipment reservation.
+  - "Confirming a booking uses local equipment reservation behavior" -> `POST /api/v1/bookings/{bookingId}/confirm` uses the lifecycle transition and records an in-memory local equipment reservation.
+  - "Cancelling a confirmed booking uses local equipment release behavior" -> `POST /api/v1/bookings/{bookingId}/cancel` uses the lifecycle transition and releases the in-memory local equipment reservation.
   - "Real external HTTP services are outside this local contract" -> local profile tests configure unavailable external base URLs and still create, confirm, and cancel using normal booking response shape.
 - Files generated:
   - None.
@@ -40,13 +40,68 @@ Do not place implementation reports under `features/`.
   - Local equipment client abstraction and in-memory local profile implementation.
   - Local equipment reservation side effect on the merged confirm lifecycle transition.
   - Local equipment release side effect on the merged confirmed-booking cancel lifecycle transition.
-- Runtime/build/lint/smoke-test results: Maven test and verify passed after rebasing onto lifecycle master; no separate runtime smoke test was run.
+- Runtime/build/lint/smoke-test results: Maven test and verify passed after merging current master with read/list; no separate runtime smoke test was run.
 - Local run instructions: `cd app && ./mvnw spring-boot:run`; the default `local` profile requires no external Schedule, Quote, or Equipment HTTP services.
 - Required environment variables: None.
 - External services: None for the local profile.
 - Seed or test data: Tests create bookings through the API.
 - Deployment artifacts, reports, logs, or generated documentation: Maven writes ignored build output under `app/target/`.
 - AI generation audit notes: Implementation was generated from `features/local-clients.feature`, `AGENTS.md`, and `docs/implementation/IMPLEMENTATION_BRIEF.md`; files under `features/` were not modified.
+
+### 2026-05-28 - Booking Read/List Contract Implementation
+
+- Feature files consumed: 1 (`features/booking-read-list.feature`).
+- Scenarios identified: 10.
+- Scenarios implemented or mapped: 10.
+- Scenarios not implemented: 0.
+- Validation commands and results:
+  - `./mvnw test` from `app/`: passed.
+  - `./mvnw verify` from `app/`: passed.
+- Test counts:
+  - Passed: 45 total tests, including 14 read/list contract tests and 17 lifecycle contract tests.
+  - Failed: 0.
+  - Skipped: 0.
+- Known gaps: Persistence remains in-memory for this slice; security/ownership checks remain deferred to their dedicated slices.
+- Assumptions: `40FT` support from the read/list fixture is documented in `docs/implementation/ASSUMPTIONS.md`; `45FT` remains rejected.
+- Deferred requirements: Other feature files under `features/` remain deferred or owned by parallel branches.
+- Unsupported scenarios: None from `features/booking-read-list.feature`.
+- Feature-to-scenario or scenario-to-implementation mapping:
+  - "Fetch a booking by numeric id" -> `GET /api/v1/bookings/{id}` with full booking details and `updatedAt`.
+  - "Fetch a booking by booking reference" -> `GET /api/v1/bookings/{bookingReference}` with `BKG-YYYY-NNNNN` references.
+  - "Missing bookings return a structured not found error" -> 404 JSON errors with `timestamp`, `status`, `error`, `message`, and `path`.
+  - "Invalid booking identifiers are rejected before lookup" -> 400 JSON errors for non-numeric/non-reference identifiers.
+  - "List bookings filtered by customer id" -> `GET /api/v1/bookings?customerId=...`.
+  - "List bookings filtered by status" -> `GET /api/v1/bookings?status=...`.
+  - "List bookings filtered by customer id and status" -> combined customer/status filters.
+  - "List response exposes stable pagination metadata" -> `content`, `page`, `size`, `totalElements`, `totalPages`, and `last`.
+  - "Empty list filters still return pagination metadata" -> empty `content` with stable page metadata.
+  - "Invalid status filter returns a structured bad request error" -> 400 JSON error for unsupported status filters.
+- Files generated:
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingPageResponse.java`
+  - `app/src/test/java/com/agenticfun/bookinggherkin/booking/BookingReadListContractTest.java`
+- Files manually edited after generation:
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingController.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingExceptionHandler.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingNotFoundException.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingResponse.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingService.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingStatus.java`
+  - `docs/implementation/ASSUMPTIONS.md`
+  - `docs/implementation/FINAL_IMPLEMENTATION_REPORT.md`
+- Components, modules, endpoints, commands, screens, or workflows created:
+  - Canonical `/api/v1/bookings` create/read/list API mapping.
+  - Legacy `/bookings` mapping retained for first-slice tests.
+  - Merged lifecycle `/api/v1/bookings/{id}/confirm|start|complete|cancel` behavior preserved from `origin/master`.
+  - Numeric-id and booking-reference lookup.
+  - Customer/status-filtered listing with stable pagination metadata.
+  - Structured path-aware 400 and 404 error bodies.
+- Runtime/build/lint/smoke-test results: Maven test and verify passed; no separate runtime smoke test was run.
+- Local run instructions: `cd app && ./mvnw spring-boot:run`, then call `/api/v1/bookings`.
+- Required environment variables: None.
+- External services: None for this slice; local validator stubs are used.
+- Seed or test data: `BookingReadListContractTest` seeds the four bookings from `features/booking-read-list.feature` through the in-memory service.
+- Deployment artifacts, reports, logs, or generated documentation: Maven builds `app/target/booking-gherkin-app-0.1.0-SNAPSHOT.jar` during `./mvnw verify`; `app/target/` is ignored build output.
+- AI generation audit notes: Implementation was generated from `features/booking-read-list.feature`, `AGENTS.md`, and `docs/implementation/IMPLEMENTATION_BRIEF.md`; files under `features/` were not modified.
 
 ### 2026-05-28 - Booking Lifecycle Implementation
 
