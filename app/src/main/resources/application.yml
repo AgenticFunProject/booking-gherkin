@@ -8,3 +8,21 @@ spring:
   web:
     resources:
       add-mappings: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+
+logging:
+  level:
+    org.springframework.web.servlet.PageNotFound: ERROR
+
+booking:
+  security:
+    enabled: false
+    jwt:
+      issuer: test-issuer
+      audience: equipments-service
+      secret: booking-gherkin-test-secret-for-hs256-validation

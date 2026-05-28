@@ -6,6 +6,14 @@ incomplete. Add new entries at the top so the newest assumption appears first.
 Do not edit `features/` to resolve ambiguity unless a project maintainer
 explicitly requests a feature-specification change.
 
+### 2026-05-28 - Security Slice JWT Verification
+
+- Context: `features/auth-ownership.feature` specifies JWT issuer, audience, roles, customer ownership claims, invalid signatures, and expiry behavior, but does not provide an identity provider, JWKS URL, or production signing algorithm.
+- Assumption: This slice implements deterministic HS256 JWT validation using configurable issuer, audience, and shared secret properties so contract tests can generate signed tokens without external identity infrastructure.
+- Risk: A production deployment should replace or extend this with OIDC/JWKS verification and secret management before accepting third-party tokens.
+- Affected feature files or scenarios: `features/auth-ownership.feature` invalid credential, role, and ownership scenarios.
+- Follow-up needed: Integrate a real resource-server/JWKS configuration when deployment identity-provider details are specified.
+
 ### 2026-05-28 - Error Handling Local Failure Triggers
 
 - Context: `features/error-handling.feature` requires local dependency behavior overrides and an unexpected internal failure, but it does not prescribe a concrete control surface for black-box tests.

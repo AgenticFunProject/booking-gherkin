@@ -9,68 +9,42 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class BookingController {
 
     private final BookingService bookingService;
+    private final BookingAuthorizer authorizer;
 
-    public BookingController(BookingService bookingService) {
+    public BookingController(BookingService bookingService, BookingAuthorizer authorizer) {
         this.bookingService = bookingService;
+        this.authorizer = authorizer;
     }
 
-    @PostMapping({"/bookings", "/api/v1/bookings"})
+    @PostMapping("/bookings")
     public ResponseEntity<BookingResponse> create(
             @Valid @RequestBody CreateBookingRequest request,
             @RequestHeader(value = "X-Local-Dependency-Behavior", required = false) String localDependencyBehavior,
             @RequestHeader(value = "X-Trigger-Internal-Failure", required = false) String internalFailure) {
-        if ("true".equalsIgnoreCase(internalFailure)) {
-            throw new IllegalStateException("Simulated internal failure for error contract verification");
-        }
-        rejectConfiguredLocalDependencyFailure(localDependencyBehavior);
+        authorizer.requireCanCreate(request.customerId());
+        maybeTriggerError(localDependencyBehavior, internalFailure);
         return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.create(request));
     }
 
     @GetMapping("/bookings/{bookingReference}")
     public BookingResponse getByReference(@PathVariable String bookingReference) {
-        return bookingService.getByIdentifier(bookingReference);
+        authorizer.requireCustomerIdentityForOwnedResource();
+        BookingResponse booking = bookingService.getByIdentifier(bookingReference);
+        authorizer.requireCanRead(booking);
+        return booking;
     }
 
-    @GetMapping("/api/v1/bookings")
-    public BookingPageResponse list(
-            @RequestParam(required = false) Long customerId,
-            @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt,desc") String sort) {
-        return bookingService.list(customerId, status, page, size, sort);
-    }
-
-    @GetMapping("/api/v1/bookings/{bookingIdentifier}")
-    public BookingResponse getByIdentifier(@PathVariable String bookingIdentifier) {
-        return bookingService.getByIdentifier(bookingIdentifier);
-    }
-
-    @PostMapping("/api/v1/bookings/{bookingId}/confirm")
-    public BookingResponse confirm(@PathVariable long bookingId) {
-        return bookingService.confirm(bookingId);
-    }
-
-    @PostMapping("/api/v1/bookings/{bookingId}/start")
-    public BookingResponse start(@PathVariable long bookingId) {
-        return bookingService.start(bookingId);
-    }
-
-    @PostMapping("/api/v1/bookings/{bookingId}/complete")
-    public BookingResponse complete(@PathVariable long bookingId) {
-        return bookingService.complete(bookingId);
-    }
-
-    @PostMapping("/api/v1/bookings/{bookingId}/cancel")
-    public BookingResponse cancel(@PathVariable long bookingId) {
-        return bookingService.cancel(bookingId);
+    static void maybeTriggerError(String localDependencyBehavior, String internalFailure) {
+        if ("true".equalsIgnoreCase(internalFailure)) {
+            throw new IllegalStateException("Simulated internal failure for error contract verification");
+        }
+        rejectConfiguredLocalDependencyFailure(localDependencyBehavior);
     }
 
     private static void rejectConfiguredLocalDependencyFailure(String behavior) {

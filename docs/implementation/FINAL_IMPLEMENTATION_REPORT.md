@@ -5,6 +5,65 @@ report appears first.
 
 Do not place implementation reports under `features/`.
 
+### 2026-05-28 - Security And Public Routes Implementation
+
+- Feature files consumed: 2 (`features/auth-ownership.feature`, `features/public-routes.feature`).
+- Scenarios identified: 17.
+- Scenarios implemented or mapped: 17.
+- Scenarios not implemented: 0.
+- Validation commands and results:
+  - `./mvnw test` from `app/`: passed after rebasing on error-handling master.
+  - `./mvnw verify` from `app/`: passed after rebasing on error-handling master.
+- Test counts:
+  - Passed: 103 total tests after rebasing on error-handling master, including 39 security/public/local contract tests.
+  - Failed: 0.
+  - Skipped: 0.
+- Known gaps: JWT verification is deterministic HS256 test-compatible support, not a production OIDC/JWKS integration.
+- Assumptions: JWT verification assumptions are documented in `docs/implementation/ASSUMPTIONS.md`.
+- Deferred requirements: Durable persistence and external identity-provider integration remain deferred.
+- Unsupported scenarios: None from `features/auth-ownership.feature` or `features/public-routes.feature`.
+- Feature-to-scenario or scenario-to-implementation mapping:
+  - Invalid or absent JWT credentials -> Spring Security filter chain plus deterministic JWT decoder returns structured 401 bodies for protected `/api/v1/bookings/**` and legacy `/bookings/**` routes.
+  - Customer ownership scenarios -> `BookingAuthorizer` enforces matching `customerId` or `customer_id` claims for create, list, read, and cancel.
+  - CUSTOMER, OPERATOR, ADMIN, and SERVICE role permissions -> API v1 controller authorizes create/list/read/cancel/lifecycle routes per feature role rules.
+  - Legacy route bypass review fix -> secured mode also authenticates `/bookings/**`; legacy create/read call the same ownership authorizer.
+  - Local unsecured mode -> `booking.security.enabled=false` permits anonymous `/api/v1/bookings` and legacy `/bookings` create/read.
+  - Public routes -> `/actuator/health`, `/api-docs/openapi.json`, and `/swagger-ui/index.html` are anonymous; `/actuator/metrics` is ADMIN-only.
+  - Unknown API paths -> structured 404 body with timestamp, status, error, message, and path, omitting `requestId` when absent.
+- Files generated:
+  - `app/src/main/java/com/agenticfun/bookinggherkin/security/**`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/web/**`
+  - `app/src/test/java/com/agenticfun/bookinggherkin/booking/AuthOwnershipContractTest.java`
+  - `app/src/test/java/com/agenticfun/bookinggherkin/booking/PublicRoutesContractTest.java`
+  - `app/src/test/java/com/agenticfun/bookinggherkin/booking/LocalUnsecuredModeContractTest.java`
+  - `app/src/test/java/com/agenticfun/bookinggherkin/security/JwtTokenFixtures.java`
+- Files manually edited after generation:
+  - `app/pom.xml`
+  - `app/src/main/resources/application.yml`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/ApiV1BookingController.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingAuthorizer.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingController.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingExceptionHandler.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingService.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingStatus.java`
+  - `docs/implementation/ASSUMPTIONS.md`
+  - `docs/implementation/FINAL_IMPLEMENTATION_REPORT.md`
+- Components, modules, endpoints, commands, screens, or workflows created:
+  - Configurable booking security mode and JWT settings.
+  - Deterministic JWT decoder and authentication filter.
+  - API v1 booking create/list/read/cancel/confirm/start/complete routes.
+  - Legacy `/bookings` create/read routes protected by the same authorization rules when security is enabled.
+  - Role and ownership authorizer for CUSTOMER, OPERATOR, ADMIN, and SERVICE.
+  - Public OpenAPI JSON and Swagger UI placeholder routes.
+  - Actuator health and metrics exposure with metrics restricted to ADMIN.
+- Runtime/build/lint/smoke-test results: Maven test and verify passed; warning scan found no matching Surefire/JVM agent warning patterns.
+- Local run instructions: `cd app && ./mvnw spring-boot:run`; enable protected mode with `booking.security.enabled=true` and JWT properties as needed.
+- Required environment variables: None for local deterministic JWT mode.
+- External services: None.
+- Seed or test data: Tests create in-memory bookings through the API.
+- Deployment artifacts, reports, logs, or generated documentation: Maven writes build artifacts under ignored `app/target/`.
+- AI generation audit notes: Implementation was generated from `features/auth-ownership.feature`, `features/public-routes.feature`, `AGENTS.md`, and implementation docs; files under `features/` were not modified.
+
 ### 2026-05-28 - Error Handling Contract Implementation
 
 - Feature files consumed: 1 (`features/error-handling.feature`).
@@ -170,7 +229,7 @@ Do not place implementation reports under `features/`.
   - Passed: 31 total tests, including 17 lifecycle contract tests.
   - Failed: 0.
   - Skipped: 0.
-- Known gaps: Lifecycle state remains in memory, matching the existing first-slice storage model; no authentication or ownership checks are implemented in this slice.
+- Known gaps: Lifecycle state remains in memory, matching the existing first-slice storage model.
 - Assumptions: No new assumptions were added; lifecycle endpoint shape follows the task request and existing first-slice in-memory storage assumption remains in `docs/implementation/ASSUMPTIONS.md`.
 - Deferred requirements: Read/list, local client integrations beyond existing stubs, error handling hardening, security, durable persistence, and ownership checks remain deferred to their own slices.
 - Unsupported scenarios: None from `features/booking-lifecycle.feature`.
