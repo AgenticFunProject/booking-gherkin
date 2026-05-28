@@ -17,6 +17,32 @@ application code. The goal is to generate and evolve a Java Spring Boot
 application from the specifications while preserving `features/` as the protected
 source input.
 
+## Agent Startup Checklist
+
+At the start of any task, read:
+
+- `AGENTS.md`
+- `docs/implementation/IMPLEMENTATION_BRIEF.md`
+- relevant files under `features/`
+- `docs/implementation/ASSUMPTIONS.md`, if it exists
+- `docs/implementation/FINAL_IMPLEMENTATION_REPORT.md`, if it exists
+
+Do not rely on prior chat history or private context that is not reflected in
+repository files or the current task description.
+
+## Instruction Priority
+
+When instructions conflict, use this order:
+
+1. Explicit current user or maintainer request.
+2. Canonical behavior described in `features/`.
+3. Workflow and guardrails in `AGENTS.md`.
+4. Stack, layout, scope, validation, and reporting details in
+   `docs/implementation/IMPLEMENTATION_BRIEF.md`.
+5. Existing implementation under `app/`.
+
+Do not resolve conflicts by silently changing `features/`.
+
 ## Generation Purpose
 
 The files in `features/` are intended to be used as AI generation inputs for
@@ -50,6 +76,17 @@ building the target project.
   editing `features/` to resolve them unless explicitly asked.
 - Preserve intentional divergence when this repository is the canonical Gherkin
   source.
+
+## Ambiguity And Assumptions
+
+If requirements are unclear or incomplete:
+
+- Do not edit `features/` to remove ambiguity unless explicitly requested.
+- Record assumptions in `docs/implementation/ASSUMPTIONS.md`, newest entries
+  first.
+- Mention assumptions, unresolved questions, and risk in the pull request.
+- Prefer a narrow implementation that preserves documented assumptions over a
+  broad implementation based on hidden context.
 
 ## Gherkin Style
 
