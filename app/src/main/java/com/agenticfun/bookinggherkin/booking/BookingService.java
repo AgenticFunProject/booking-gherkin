@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,10 +20,12 @@ public class BookingService {
     private final Map<Long, BookingResponse> bookingsById = new ConcurrentHashMap<>();
     private final Map<String, BookingResponse> bookingsByReference = new ConcurrentHashMap<>();
     private final List<ExternalBookingValidator> externalValidators;
+    private final EquipmentClient equipmentClient;
     private final Clock clock = Clock.systemUTC();
 
-    public BookingService(List<ExternalBookingValidator> externalValidators) {
+    public BookingService(List<ExternalBookingValidator> externalValidators, EquipmentClient equipmentClient) {
         this.externalValidators = externalValidators;
+        this.equipmentClient = equipmentClient;
     }
 
     public BookingResponse create(CreateBookingRequest request) {
@@ -42,8 +45,7 @@ public class BookingService {
                 BookingStatus.PENDING,
                 bookingReference(id, createdAt),
                 createdAt);
-        bookingsById.put(booking.id(), booking);
-        bookingsByReference.put(booking.bookingReference(), booking);
+        store(booking);
         return booking;
     }
 
@@ -64,7 +66,7 @@ public class BookingService {
     }
 
     public BookingResponse confirm(long bookingId) {
-        return transition(bookingId, BookingStatus.PENDING, BookingStatus.CONFIRMED);
+        return transition(bookingId, BookingStatus.PENDING, BookingStatus.CONFIRMED, equipmentClient::reserve);
     }
 
     public BookingResponse start(long bookingId) {
@@ -76,14 +78,31 @@ public class BookingService {
     }
 
     public BookingResponse cancel(long bookingId) {
-        return transition(bookingId, Set.of(BookingStatus.PENDING, BookingStatus.CONFIRMED), BookingStatus.CANCELLED);
+        return transition(bookingId, Set.of(BookingStatus.PENDING, BookingStatus.CONFIRMED), BookingStatus.CANCELLED,
+                booking -> {
+                    if (booking.status() == BookingStatus.CONFIRMED) {
+                        equipmentClient.release(booking);
+                    }
+                });
     }
 
     private BookingResponse transition(long bookingId, BookingStatus requiredCurrentStatus, BookingStatus targetStatus) {
         return transition(bookingId, Set.of(requiredCurrentStatus), targetStatus);
     }
 
-    private BookingResponse transition(long bookingId, Set<BookingStatus> allowedCurrentStatuses, BookingStatus targetStatus) {
+    private BookingResponse transition(long bookingId, BookingStatus requiredCurrentStatus, BookingStatus targetStatus,
+            Consumer<BookingResponse> beforeTransition) {
+        return transition(bookingId, Set.of(requiredCurrentStatus), targetStatus, beforeTransition);
+    }
+
+    private BookingResponse transition(long bookingId, Set<BookingStatus> allowedCurrentStatuses,
+            BookingStatus targetStatus) {
+        return transition(bookingId, allowedCurrentStatuses, targetStatus, booking -> {
+        });
+    }
+
+    private BookingResponse transition(long bookingId, Set<BookingStatus> allowedCurrentStatuses,
+            BookingStatus targetStatus, Consumer<BookingResponse> beforeTransition) {
         return bookingsById.compute(bookingId, (id, current) -> {
             if (current == null) {
                 throw new BookingNotFoundException(id);
@@ -92,10 +111,16 @@ public class BookingService {
                 throw new BookingLifecycleConflictException(id, current.status(), targetStatus);
             }
 
+            beforeTransition.accept(current);
             BookingResponse updated = withStatus(current, targetStatus);
             bookingsByReference.put(updated.bookingReference(), updated);
             return updated;
         });
+    }
+
+    private void store(BookingResponse booking) {
+        bookingsById.put(booking.id(), booking);
+        bookingsByReference.put(booking.bookingReference(), booking);
     }
 
     private void rejectUnsupportedEquipment(CreateBookingRequest request) {
