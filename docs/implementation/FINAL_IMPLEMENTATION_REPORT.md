@@ -5,6 +5,56 @@ report appears first.
 
 Do not place implementation reports under `features/`.
 
+### 2026-05-28 - Final Demo Delivery Pass
+
+- Feature files consumed: 10 (`features/auth-ownership.feature`, `features/booking-cancellation.feature`, `features/booking-create.feature`, `features/booking-lifecycle.feature`, `features/booking-read-list.feature`, `features/demo.feature`, `features/error-handling.feature`, `features/local-clients.feature`, `features/persistence-runtime.feature`, `features/public-routes.feature`).
+- Scenarios identified: 72 scenario definitions across the full feature set, including 2 demo scenario definitions from `features/demo.feature`.
+- Scenarios implemented or mapped: 72 scenario definitions mapped by the generated Spring Boot app and focused contract tests, including the full local demo flow for customer `4201`.
+- Scenarios not implemented: 0 known unmapped scenario definitions in the consumed feature set.
+- Validation commands and results:
+  - `./mvnw test` from `app/`: passed; log captured at `/tmp/bg-6ju-final-mvn-test.log`.
+  - `./mvnw verify` from `app/`: passed; log captured at `/tmp/bg-6ju-final-mvn-verify.log`.
+- Test counts:
+  - Passed: 120 total tests, including 2 focused demo contract tests.
+  - Failed: 0.
+  - Skipped: 0.
+- Warning scan:
+  - Command: `rg -n "WARN|WARNING:|warning: Sharing|ByteBuddy|Java agent has been loaded dynamically|Dynamic loading of agents" /tmp/bg-6ju-final-mvn-test.log /tmp/bg-6ju-final-mvn-verify.log`.
+  - Result: no matches.
+- Known gaps: The implementation remains a local generated service, not a production deployment. Persistence is local JSON-file persistence, external Schedule/Quote/Equipment integrations are local stubs, JWT verification is deterministic HS256 support for contract validation, and Swagger UI is a minimal packaged API-documentation page.
+- Assumptions: Existing assumptions remain documented in `docs/implementation/ASSUMPTIONS.md`; this final pass added no new assumptions.
+- Deferred requirements: Production OIDC/JWKS integration, real external service clients, production database migrations, multi-node persistence/locking, and deployment hardening remain outside this generated local contract app.
+- Unsupported scenarios: None identified in the consumed feature files.
+- Feature-to-scenario or scenario-to-implementation mapping:
+  - `features/booking-create.feature` -> create/read by booking reference, request validation, generated references, local schedule/quote stubs, and equipment allowlist behavior.
+  - `features/booking-lifecycle.feature` -> confirm/start/complete/cancel lifecycle transitions and conflict handling.
+  - `features/booking-read-list.feature` -> read by numeric id or booking reference and customer/status-filtered paginated lists.
+  - `features/local-clients.feature` -> local no-HTTP schedule/quote/equipment behavior plus reserve/release effects on lifecycle actions.
+  - `features/error-handling.feature` -> stable structured error bodies for validation, business, security, routing, integration, and internal-error cases.
+  - `features/auth-ownership.feature` -> JWT authentication, role permissions, customer ownership checks, and local unsecured mode.
+  - `features/public-routes.feature` -> public health, OpenAPI JSON, Swagger UI, protected booking routes, and structured unknown-route errors.
+  - `features/booking-cancellation.feature` -> CUSTOMER/SERVICE/ADMIN cancellation behavior, release attempts, release failure tolerance, and ineligible-status conflicts.
+  - `features/persistence-runtime.feature` -> local durable booking state, restart restoration, lifecycle status persistence, reference uniqueness, and filtered lists after restart.
+  - `features/demo.feature` -> public local inspection, empty customer `4201` list, create/read/list/confirm/start/complete/read demo workflow.
+- Files generated:
+  - `app/src/test/java/com/agenticfun/bookinggherkin/booking/BookingDemoContractTest.java`
+- Files manually edited after generation:
+  - `docs/implementation/FINAL_IMPLEMENTATION_REPORT.md`
+- Components, modules, endpoints, commands, screens, or workflows created:
+  - Final demo contract test covering `/swagger-ui/index.html`, `/api-docs/openapi.json`, `GET /api/v1/bookings?customerId=4201`, `POST /api/v1/bookings`, `GET /api/v1/bookings/{bookingReference}`, `POST /api/v1/bookings/{id}/confirm`, `/start`, `/complete`, and final `GET /api/v1/bookings/{id}`.
+- Runtime/build/lint/smoke-test results: Maven test and verify passed; the required warning scan had no matches.
+- Local run instructions:
+  - Start the local unsecured service: `cd app && ./mvnw spring-boot:run`.
+  - Inspect Swagger UI: `http://localhost:8080/swagger-ui/index.html`.
+  - Inspect OpenAPI JSON: `http://localhost:8080/api-docs/openapi.json`.
+  - Optional clean demo state: set `BOOKING_RUNTIME_PATH` to an empty/new JSON path before starting if prior local runs may have persisted customer `4201` bookings.
+- Required environment variables: None. `BOOKING_RUNTIME_PATH` is optional for isolating durable local state.
+- External services: None for the default local profile; Schedule, Quote, and Equipment behavior uses local stubs.
+- Seed or test data: Demo tests create customer `4201` bookings through public HTTP behavior and clear test-local state before each demo scenario.
+- Deployment artifacts, reports, logs, or generated documentation: Maven writes ignored build output under `app/target/`; validation logs were captured under `/tmp`.
+- Features directory status: files under `features/` remained unchanged.
+- AI generation audit notes: Final delivery pass was generated from the required project instructions, implementation docs, and `features/demo.feature`; app code was limited to `app/` and report updates were limited to `docs/implementation/`.
+
 ### 2026-05-28 - Persistence Runtime Implementation
 
 - Feature files consumed: 1 (`features/persistence-runtime.feature`).
