@@ -16,6 +16,7 @@ public class BookingService {
     private static final Set<String> SUPPORTED_EQUIPMENT_TYPES = Set.of("20FT", "40HC", "REEFER");
 
     private final AtomicLong idSequence = new AtomicLong();
+    private final Map<Long, BookingResponse> bookingsById = new ConcurrentHashMap<>();
     private final Map<String, BookingResponse> bookingsByReference = new ConcurrentHashMap<>();
     private final List<ExternalBookingValidator> externalValidators;
     private final Clock clock = Clock.systemUTC();
@@ -41,6 +42,7 @@ public class BookingService {
                 BookingStatus.PENDING,
                 bookingReference(id, createdAt),
                 createdAt);
+        bookingsById.put(booking.id(), booking);
         bookingsByReference.put(booking.bookingReference(), booking);
         return booking;
     }
@@ -51,6 +53,49 @@ public class BookingService {
             throw new BookingNotFoundException(bookingReference);
         }
         return booking;
+    }
+
+    public BookingResponse getById(long bookingId) {
+        BookingResponse booking = bookingsById.get(bookingId);
+        if (booking == null) {
+            throw new BookingNotFoundException(bookingId);
+        }
+        return booking;
+    }
+
+    public BookingResponse confirm(long bookingId) {
+        return transition(bookingId, BookingStatus.PENDING, BookingStatus.CONFIRMED);
+    }
+
+    public BookingResponse start(long bookingId) {
+        return transition(bookingId, BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS);
+    }
+
+    public BookingResponse complete(long bookingId) {
+        return transition(bookingId, BookingStatus.IN_PROGRESS, BookingStatus.COMPLETED);
+    }
+
+    public BookingResponse cancel(long bookingId) {
+        return transition(bookingId, Set.of(BookingStatus.PENDING, BookingStatus.CONFIRMED), BookingStatus.CANCELLED);
+    }
+
+    private BookingResponse transition(long bookingId, BookingStatus requiredCurrentStatus, BookingStatus targetStatus) {
+        return transition(bookingId, Set.of(requiredCurrentStatus), targetStatus);
+    }
+
+    private BookingResponse transition(long bookingId, Set<BookingStatus> allowedCurrentStatuses, BookingStatus targetStatus) {
+        return bookingsById.compute(bookingId, (id, current) -> {
+            if (current == null) {
+                throw new BookingNotFoundException(id);
+            }
+            if (!allowedCurrentStatuses.contains(current.status())) {
+                throw new BookingLifecycleConflictException(id, current.status(), targetStatus);
+            }
+
+            BookingResponse updated = withStatus(current, targetStatus);
+            bookingsByReference.put(updated.bookingReference(), updated);
+            return updated;
+        });
     }
 
     private void rejectUnsupportedEquipment(CreateBookingRequest request) {
@@ -64,5 +109,19 @@ public class BookingService {
     private static String bookingReference(long id, Instant createdAt) {
         int year = createdAt.atZone(ZoneOffset.UTC).getYear();
         return "BKG-%d-%05d".formatted(year, id);
+    }
+
+    private static BookingResponse withStatus(BookingResponse booking, BookingStatus status) {
+        return new BookingResponse(
+                booking.id(),
+                booking.customerId(),
+                booking.scheduleId(),
+                booking.quoteId(),
+                booking.customer(),
+                booking.cargo(),
+                booking.equipment(),
+                status,
+                booking.bookingReference(),
+                booking.createdAt());
     }
 }
