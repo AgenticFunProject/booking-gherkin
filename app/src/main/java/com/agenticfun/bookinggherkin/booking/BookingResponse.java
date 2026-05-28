@@ -13,5 +13,6 @@ public record BookingResponse(
         List<EquipmentLine> equipment,
         BookingStatus status,
         String bookingReference,
-        Instant createdAt) {
+        Instant createdAt,
+        Instant updatedAt) {
 }
