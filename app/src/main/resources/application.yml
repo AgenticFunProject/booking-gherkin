@@ -3,3 +3,8 @@ spring:
     name: booking-gherkin-app
   profiles:
     default: local
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false

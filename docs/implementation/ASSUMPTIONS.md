@@ -6,6 +6,22 @@ incomplete. Add new entries at the top so the newest assumption appears first.
 Do not edit `features/` to resolve ambiguity unless a project maintainer
 explicitly requests a feature-specification change.
 
+### 2026-05-28 - Error Handling Local Failure Triggers
+
+- Context: `features/error-handling.feature` requires local dependency behavior overrides and an unexpected internal failure, but it does not prescribe a concrete control surface for black-box tests.
+- Assumption: The error-handling slice uses HTTP headers as deterministic local-profile triggers: `X-Local-Dependency-Behavior` for schedule, quote, and equipment-reservation failures, and `X-Trigger-Internal-Failure` for sanitized 500 responses.
+- Risk: Later integration slices may replace these header hooks with client stubs, test configuration, or failure-injection fixtures.
+- Affected feature files or scenarios: `features/error-handling.feature` scenarios "Business and integration exception statuses stay stable" and "Unexpected server errors hide internal details".
+- Follow-up needed: Revisit these hooks when full external client integrations and resilience behavior are implemented.
+
+### 2026-05-28 - Empty Equipment Error Classification
+
+- Context: `features/booking-create.feature` describes the empty equipment list rejection as a validation failure, while `features/error-handling.feature` lists the same case under business validation errors without field-level `violations`.
+- Assumption: The error-handling slice keeps the rejection status and message but classifies an empty equipment list as a business `400 Bad Request` without `violations`, matching the more specific error-body contract.
+- Risk: A future Cucumber runner may need a shared definition of "validation failure" that accepts this business error shape, or the feature files may need maintainer clarification.
+- Affected feature files or scenarios: `features/booking-create.feature` scenario "Empty equipment list is rejected"; `features/error-handling.feature` scenario outline "Business validation errors return Bad Request without field violations".
+- Follow-up needed: Confirm the intended classification before implementing a full end-to-end contract runner.
+
 ### 2026-05-28 - Local Clients Use Lifecycle Endpoint Mapping
 
 - Context: `features/local-clients.feature` requires clients to confirm, cancel, and retrieve the latest booking by id, but it does not define concrete lifecycle HTTP paths. The lifecycle implementation merged first and defines the authoritative id-based lifecycle API.

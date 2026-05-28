@@ -113,6 +113,83 @@ public class BookingService {
         bookingsById.clear();
     }
 
+    public BookingResponse confirm(long bookingId) {
+        return transition(bookingId, BookingStatus.PENDING, BookingStatus.CONFIRMED, equipmentClient::reserve);
+    }
+
+    public BookingResponse start(long bookingId) {
+        return transition(bookingId, BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS);
+    }
+
+    public BookingResponse complete(long bookingId) {
+        return transition(bookingId, BookingStatus.IN_PROGRESS, BookingStatus.COMPLETED);
+    }
+
+    public BookingResponse cancel(long bookingId) {
+        return transition(bookingId, Set.of(BookingStatus.PENDING, BookingStatus.CONFIRMED), BookingStatus.CANCELLED,
+                booking -> {
+                    if (booking.status() == BookingStatus.CONFIRMED) {
+                        equipmentClient.release(booking);
+                    }
+                });
+    }
+
+    private BookingResponse transition(long bookingId, BookingStatus requiredCurrentStatus, BookingStatus targetStatus) {
+        return transition(bookingId, Set.of(requiredCurrentStatus), targetStatus);
+    }
+
+    private BookingResponse transition(
+            long bookingId,
+            BookingStatus requiredCurrentStatus,
+            BookingStatus targetStatus,
+            Consumer<BookingResponse> beforeTransition) {
+        return transition(bookingId, Set.of(requiredCurrentStatus), targetStatus, beforeTransition);
+    }
+
+    private BookingResponse transition(
+            long bookingId,
+            Set<BookingStatus> allowedCurrentStatuses,
+            BookingStatus targetStatus) {
+        return transition(bookingId, allowedCurrentStatuses, targetStatus, booking -> {
+        });
+    }
+
+    private BookingResponse transition(
+            long bookingId,
+            Set<BookingStatus> allowedCurrentStatuses,
+            BookingStatus targetStatus,
+            Consumer<BookingResponse> beforeTransition) {
+        return bookingsById.compute(bookingId, (id, current) -> {
+            if (current == null) {
+                throw BookingNotFoundException.withId(id);
+            }
+            if (!allowedCurrentStatuses.contains(current.status())) {
+                throw new BookingLifecycleConflictException(id, current.status(), targetStatus);
+            }
+
+            beforeTransition.accept(current);
+            BookingResponse updated = withStatus(current, targetStatus);
+            bookingsByReference.put(updated.bookingReference(), updated);
+            return updated;
+        });
+    }
+
+    private void store(BookingResponse booking) {
+        bookingsById.put(booking.id(), booking);
+        bookingsByReference.put(booking.bookingReference(), booking);
+    }
+
+    private void rejectUnsupportedEquipment(CreateBookingRequest request) {
+        if (request.equipment().isEmpty()) {
+            throw new BadBookingRequestException("equipment must contain at least one line");
+        }
+        for (EquipmentLine line : request.equipment()) {
+            if (!SUPPORTED_EQUIPMENT_TYPES.contains(line.type())) {
+                throw new BadBookingRequestException("Unsupported equipment type: " + line.type());
+            }
+        }
+    }
+
     private static BookingStatus parseStatus(String status) {
         if (status == null || status.isBlank()) {
             return null;
@@ -144,80 +221,6 @@ public class BookingService {
     private static BadBookingRequestException invalidIdentifier(String identifier) {
         return new BadBookingRequestException("Invalid booking identifier: " + identifier
                 + ". Expected numeric ID or booking reference in format BKG-YYYY-NNNNN");
-    }
-
-    public BookingResponse getById(long bookingId) {
-        BookingResponse booking = bookingsById.get(bookingId);
-        if (booking == null) {
-            throw new BookingNotFoundException(bookingId);
-        }
-        return booking;
-    }
-
-    public BookingResponse confirm(long bookingId) {
-        return transition(bookingId, BookingStatus.PENDING, BookingStatus.CONFIRMED, equipmentClient::reserve);
-    }
-
-    public BookingResponse start(long bookingId) {
-        return transition(bookingId, BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS);
-    }
-
-    public BookingResponse complete(long bookingId) {
-        return transition(bookingId, BookingStatus.IN_PROGRESS, BookingStatus.COMPLETED);
-    }
-
-    public BookingResponse cancel(long bookingId) {
-        return transition(bookingId, Set.of(BookingStatus.PENDING, BookingStatus.CONFIRMED), BookingStatus.CANCELLED,
-                booking -> {
-                    if (booking.status() == BookingStatus.CONFIRMED) {
-                        equipmentClient.release(booking);
-                    }
-                });
-    }
-
-    private BookingResponse transition(long bookingId, BookingStatus requiredCurrentStatus, BookingStatus targetStatus) {
-        return transition(bookingId, Set.of(requiredCurrentStatus), targetStatus);
-    }
-
-    private BookingResponse transition(long bookingId, BookingStatus requiredCurrentStatus, BookingStatus targetStatus,
-            Consumer<BookingResponse> beforeTransition) {
-        return transition(bookingId, Set.of(requiredCurrentStatus), targetStatus, beforeTransition);
-    }
-
-    private BookingResponse transition(long bookingId, Set<BookingStatus> allowedCurrentStatuses,
-            BookingStatus targetStatus) {
-        return transition(bookingId, allowedCurrentStatuses, targetStatus, booking -> {
-        });
-    }
-
-    private BookingResponse transition(long bookingId, Set<BookingStatus> allowedCurrentStatuses,
-            BookingStatus targetStatus, Consumer<BookingResponse> beforeTransition) {
-        return bookingsById.compute(bookingId, (id, current) -> {
-            if (current == null) {
-                throw new BookingNotFoundException(id);
-            }
-            if (!allowedCurrentStatuses.contains(current.status())) {
-                throw new BookingLifecycleConflictException(id, current.status(), targetStatus);
-            }
-
-            beforeTransition.accept(current);
-            BookingResponse updated = withStatus(current, targetStatus);
-            bookingsByReference.put(updated.bookingReference(), updated);
-            return updated;
-        });
-    }
-
-    private void store(BookingResponse booking) {
-        bookingsById.put(booking.id(), booking);
-        bookingsByReference.put(booking.bookingReference(), booking);
-    }
-
-    private void rejectUnsupportedEquipment(CreateBookingRequest request) {
-        for (EquipmentLine line : request.equipment()) {
-            if (!SUPPORTED_EQUIPMENT_TYPES.contains(line.type())) {
-                throw new BadBookingRequestException("Unsupported equipment type: " + line.type());
-            }
-        }
     }
 
     private static String bookingReference(long id, Instant createdAt) {
