@@ -6,6 +6,14 @@ incomplete. Add new entries at the top so the newest assumption appears first.
 Do not edit `features/` to resolve ambiguity unless a project maintainer
 explicitly requests a feature-specification change.
 
+### 2026-05-28 - Read/List Equipment Fixture Clarification
+
+- Context: `features/booking-read-list.feature` seeds an existing completed booking with equipment type `40FT`, while the first slice only derived an allowlist from create scenarios.
+- Assumption: `40FT` is now treated as a supported equipment type for generated app behavior; `45FT` remains unsupported because `features/booking-create.feature` explicitly rejects it.
+- Risk: A future canonical equipment catalog may replace this incremental allowlist.
+- Affected feature files or scenarios: `features/booking-read-list.feature` Background seeded bookings and `features/booking-create.feature` scenario "Unsupported equipment type is rejected".
+- Follow-up needed: Replace the incremental allowlist when a broader equipment-catalog feature or domain model is specified.
+
 ### 2026-05-28 - First Slice REST And Storage Mapping
 
 - Context: `features/booking-create.feature` specifies client booking creation and retrieval behavior but does not name concrete HTTP paths or persistence technology for the first implementation slice.
