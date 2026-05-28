@@ -143,7 +143,7 @@ class BookingCreateContractTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.fields").value(hasItem(field)));
+                .andExpect(jsonPath("$.violations[*].field").value(hasItem(field)));
     }
 
     @Test
@@ -201,7 +201,7 @@ class BookingCreateContractTest {
                         .content(request))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.fields").value(hasItem("equipment")));
+                .andExpect(jsonPath("$.message").value(containsString("equipment")));
     }
 
     private String createValidBookingReference() throws Exception {

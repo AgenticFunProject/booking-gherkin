@@ -5,6 +5,60 @@ report appears first.
 
 Do not place implementation reports under `features/`.
 
+### 2026-05-28 - Error Handling Contract Implementation
+
+- Feature files consumed: 1 (`features/error-handling.feature`).
+- Scenarios identified: 14.
+- Scenarios implemented or mapped: 11.
+- Scenarios not implemented: 3.
+- Validation commands and results:
+  - `./mvnw test` from `app/`: passed.
+  - `./mvnw verify` from `app/`: passed.
+- Test counts:
+  - Passed: 64 total tests, including 15 error-handling, 14 read/list, 17 lifecycle, and 4 local-clients contract tests after rebasing on the local-clients slice.
+  - Failed: 0.
+  - Skipped: 0.
+- Known gaps: Security-specific 401/403/customer-ownership behavior is deferred to the security slice; lifecycle, read/list, and local equipment behavior are provided by merged master slices with the same structured error body.
+- Assumptions: Error handling local failure triggers, empty equipment error classification, local client lifecycle endpoint mapping, and read/list `40FT` fixture support are documented in `docs/implementation/ASSUMPTIONS.md`.
+- Deferred requirements: `features/error-handling.feature` scenarios "Anonymous callers receive the structured Unauthorized response", "Forbidden callers receive the structured Forbidden response", and "Customer list requests without a required customerId return Bad Request".
+- Unsupported scenarios: Security-specific scenarios listed above.
+- Feature-to-scenario or scenario-to-implementation mapping:
+  - "Every standard error body exposes stable top-level fields" -> global JSON error body with `timestamp`, `status`, `error`, `message`, `path`, and optional `requestId`.
+  - "Bean validation failures return field-level violations" -> sorted `violations` array with `field`, `message`, and `rejectedValue`.
+  - "Business validation errors return Bad Request without field violations" -> unsupported equipment, empty equipment list, and invalid booking identifier return `400` without `violations`.
+  - "Malformed JSON request bodies return a sanitized Bad Request" -> `HttpMessageNotReadableException` maps to fixed message `Malformed JSON request body`.
+  - "Business and integration exception statuses stay stable" -> local-profile header triggers return `422` for schedule/quote failures and `503` for equipment reservation failure.
+  - "Missing bookings return Not Found" -> valid but absent booking identifiers return structured `404`.
+  - "Illegal lifecycle transitions return Conflict and do not change status" -> merged lifecycle transition guard returns structured `409` and preserves status.
+  - "Invalid query parameter values return Bad Request" -> enum conversion failures return structured `400` containing the parameter and target type.
+  - "Unsupported methods return Method Not Allowed" -> unsupported HTTP methods return structured `405`.
+  - "Unknown API paths return the structured Not Found response" -> no-handler API paths return structured `404` and omit `requestId` when absent.
+  - "Unexpected server errors hide internal details" -> catch-all handler returns sanitized `500`.
+- Files generated:
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/IntegrationUnavailableException.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/UnprocessableBookingException.java`
+  - `app/src/test/java/com/agenticfun/bookinggherkin/booking/BookingErrorHandlingContractTest.java`
+- Files manually edited after generation:
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingController.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingExceptionHandler.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/BookingService.java`
+  - `app/src/main/java/com/agenticfun/bookinggherkin/booking/CreateBookingRequest.java`
+  - `app/src/main/resources/application.yml`
+  - `app/src/test/java/com/agenticfun/bookinggherkin/booking/BookingCreateContractTest.java`
+  - `docs/implementation/ASSUMPTIONS.md`
+  - `docs/implementation/FINAL_IMPLEMENTATION_REPORT.md`
+- Components, modules, endpoints, commands, screens, or workflows created:
+  - Structured REST exception handling for validation, malformed JSON, business errors, 404, 405, invalid query parameters, 422, 503, and sanitized 500 responses.
+  - Structured error handling layered onto the merged `/api/v1/bookings` read/list, lifecycle, and local equipment flows.
+  - Local-profile header hooks for deterministic integration and unexpected-error scenarios.
+- Runtime/build/lint/smoke-test results: Maven test and verify passed; no separate runtime smoke test was run.
+- Local run instructions: `cd app && ./mvnw spring-boot:run`, then use `/api/v1/bookings` or the retained `/bookings` first-slice endpoints.
+- Required environment variables: None.
+- External services: None for this slice; local validator stubs and deterministic local headers are used.
+- Seed or test data: Tests create bookings through the API and use missing identifiers for error responses.
+- Deployment artifacts, reports, logs, or generated documentation: Maven builds `app/target/booking-gherkin-app-0.1.0-SNAPSHOT.jar` during `./mvnw verify`; `app/target/` is ignored build output.
+- AI generation audit notes: Implementation was generated from `features/error-handling.feature`, `AGENTS.md`, and `docs/implementation/IMPLEMENTATION_BRIEF.md`; files under `features/` were not modified.
+
 ### 2026-05-28 - Local External Clients Contract Implementation
 
 - Feature files consumed: 1 (`features/local-clients.feature`).
